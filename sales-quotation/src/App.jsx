@@ -1,42 +1,18 @@
-import React, { useState } from "react";
+import React from "react";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom"; 
 import Login from "./pages/Login";
 import QuoteRequest from "./pages/QuoteRequest";
 
 function App() {
-  /*const [isLoggedIn, setIsLoggedIn] = useState(() => !!localStorage.getItem("token"));
-  const [user, setUser] = useState(() => {
-    const saved = localStorage.getItem("user");
-    return saved ? JSON.parse(saved) : null;
-  });
-
-  const [pageTitle, setPageTitle] = useState("MainPage");
-
-  const [isOpen, setIsOpen] = useState(false);
-
-  const handleLoginSuccess = (userData) => {
-    setIsLoggedIn(true);
-    setUser(userData);
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem("user");
-    localStorage.removeItem("token");
-    setIsLoggedIn(false);
-    setUser(null);
-  };*/
-
   return (
-    <div className="App min-h-screen bg-slate-50">
-      {/*{!isLoggedIn ? (*/}
-        <QuoteRequest
-        // onLoginSuccess={handleLoginSuccess}
-        />
-      {/*}) : (
-        <>
-          
-        </>
-      )}*/}
-    </div>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Login />} />
+        <Route path="/quote-request" element={<QuoteRequest />} />
+        {/* Redirect jika path salah */}
+        <Route path="*" element={<Navigate to="/" />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
 

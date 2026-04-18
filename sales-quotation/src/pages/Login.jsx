@@ -1,86 +1,25 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 
 function Login({ onLoginSuccess }) {
-/*
-  const [employeeID, setEmployeeID] = useState('');
-  const [password, setPassword] = useState('');
+  const navigate = useNavigate(); // Inisialisasi navigate
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    document.title = "Login";
-  }, []);
-
-
-  const handleLogin = async (e) => {
-  e.preventDefault(); // Mencegah page reload saat submit form
-
-  try {
-    const response = await fetch(`{*API Login*}`, {
-      method: 'POST', // Menentukan metode pengiriman data
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        username: username,
-        password: password,
-      }),
-    });
-
-    const data = await response.json();
-
-    if (response.ok) {
-      // TIPS PRO: Simpan Token JWT ke LocalStorage agar saat refresh tidak logout
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('user', JSON.stringify(data.user));
-      
-      // Arahkan ke halaman utama
-      navigate('/first-inspection');
-    } else {
-      alert(data.message || 'Login Gagal!');
-    }
-  } catch (error) {
-    console.error("Error Login:", error);
-    alert("Gagal terhubung ke server backend.");
-  }
-};
-
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
     setLoading(true);
 
-    try {
-      const response = await fetch('API_LOGIN', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id: employeeID,
-          password: password,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok && data.success) {
-        // TAMBAHKAN DUA BARIS INI:
-        localStorage.setItem('token', data.token); // Simpan token JWT
-        localStorage.setItem('user', JSON.stringify(data.user)); // Simpan data user
-        
-        onLoginSuccess(data.user);
-      } else {
-        alert(data.message || "ID atau Password salah!");
-      }
-    } catch (error) {
-      console.error("Login Error:", error);
-      alert("Gagal terhubung ke server.");
-    } finally {
+  setTimeout(() => {
+      console.log("Login sukses (Mock)");
       setLoading(false);
-    }
+
+      navigate('/quote-request'); 
+    }, 500);
   };
-  */
 
   //hapus saat sudah terhubung ke backend!!!
-  const loading = false;
+  //const loading = false;
   return (
     <div className="flex h-screen w-full overflow-hidden bg-white">
       
@@ -107,7 +46,7 @@ function Login({ onLoginSuccess }) {
 
           
           <form className="space-y-6" 
-          //</div>onSubmit={handleSubmit}
+          onSubmit={handleSubmit}
           >
             <div>
               <label className="block text-sm font-semibold text-slate-700">ID Karyawan</label>

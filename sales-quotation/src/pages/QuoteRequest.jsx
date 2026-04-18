@@ -3,9 +3,14 @@ import CalendarPanel from "../components/CalendarPanel";
 
 function QuoteRequest() {
   return (
-    <div className="lg:flex">
+    <div className='min-h-screen bg-slate-50'>
+      <div className="px-2 py-2">
+    <h1 className="text-slate-800 font-bold text-xl">
+      Add New Quote Request
+    </h1>
+    </div>
+    <div className="lg:flex lg:border lg:border-slate-300 lg:ml-4 lg:mr-4 lg:mb-4">
       <div className="flex flex-col lg:w-1/2 lg:min-h-screen bg-slate-50 border-r border-slate-300">
-      <h1 className="text-slate-800 font-bold text-xl mb-5">Add New Quote Request</h1>
         <div className="m-5">
         <form action="" className=' border-slate-500'>
           <div className="md:max-w-2xl">
@@ -45,7 +50,7 @@ function QuoteRequest() {
 
             {/* Submit Button Section */}
             <div className='mt-8 mb-5 flex justify-end'>
-              <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 font-bold rounded shadow-md transition-transform active:scale-95">
+              <button className="bg-blue-500 hover:bg-blue-700 text-white px-6 py-2 font-bold rounded shadow-md transition-transform active:scale-95">
                 Submit
               </button>
             </div>
@@ -73,12 +78,12 @@ function QuoteRequest() {
         </div>
       </div>
       </div>
-      <div className="lg:w-1/2 p-4 bg-slate-50 border-r border-slate-300">
-        <h1 className="text-white bg-blue-500 font-bold text-xl mb-5 p-2">Calendar</h1>
+      <div className="lg:w-1/2 bg-slate-50 border-slate-300">
+        <h1 className="text-white bg-blue-500 font-bold text-xl p-2">Calendar</h1>
         <CalendarPanel />
       </div>
     </div>
-    
+    </div>
   );
 }
 
