@@ -1,10 +1,12 @@
 import React from 'react';
+import CalendarPanel from "../components/CalendarPanel";
 
 function QuoteRequest() {
   return (
-    <div className="flex flex-col max-w-2xl min-h-screen bg-slate-50 border-r border-slate-300">
-      <div className="m-5">
-        <h1 className="text-slate-800 font-bold text-xl mb-5">Add New Quote Request</h1>
+    <div className="lg:flex">
+      <div className="flex flex-col lg:w-1/2 lg:min-h-screen bg-slate-50 border-r border-slate-300">
+      <h1 className="text-slate-800 font-bold text-xl mb-5">Add New Quote Request</h1>
+        <div className="m-5">
         <form action="" className=' border-slate-500'>
           <div className="md:max-w-2xl">
             <div className='grid grid-cols-1 md:grid-cols-2 gap-y-5 gap-x-4 items-center'>
@@ -69,9 +71,14 @@ function QuoteRequest() {
           <input className='w-18 border-2 border-slate-300 rounded-md px-2 py-1' />
           <input className='w-18 border-2 border-slate-300 rounded-md px-2 py-1' />
         </div>
-
+      </div>
+      </div>
+      <div className="lg:w-1/2 p-4 bg-slate-50 border-r border-slate-300">
+        <h1 className="text-white bg-blue-500 font-bold text-xl mb-5 p-2">Calendar</h1>
+        <CalendarPanel />
       </div>
     </div>
+    
   );
 }
 
