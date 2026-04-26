@@ -23,6 +23,7 @@ function QuoteRequest() {
   ]);
   
   const [bookedDates, setBookedDates] = useState([]);
+  const [availabilityData, setAvailabilityData] = useState([]);
 
   // --- FETCH DATA ---
   useEffect(() => {
@@ -33,13 +34,14 @@ function QuoteRequest() {
         const [resAircraft, resAirport, resDrafts] = await Promise.all([
           axios.get('https://project-ppl-backend-production-9d58.up.railway.app/api/aircraft', { headers: { Authorization: `Bearer ${token}` } }),
           axios.get('https://project-ppl-backend-production-9d58.up.railway.app/api/airport', { headers: { Authorization: `Bearer ${token}` } }),
-          axios.get('https://project-ppl-backend-production-9d58.up.railway.app/api/draft-quotation', { headers: { Authorization: `Bearer ${token}` } })
+          axios.get('https://project-ppl-backend-production-9d58.up.railway.app/api/draft-quotation', { headers: { Authorization: `Bearer ${token}` } }),
+          axios.get('https://project-ppl-backend-production-9d58.up.railway.app/api/aircraft-available', { headers: { Authorization: `Bearer ${token}` } })
         ]);
         
         setAircrafts(resAircraft.data.data || resAircraft.data);
         setAirports(resAirport.data.data || resAirport.data);
-        // Sekarang resDrafts sudah aman digunakan
         setBookedDates(resDrafts.data.data || resDrafts.data);
+        setAvailabilityData(resAvailable.data.data || resAvailable.data);
       } catch (err) { 
         console.error("Fetch Error:", err); 
       }
@@ -80,29 +82,102 @@ const todayString = new Date().toISOString().split('T')[0];
   const handleSubmit = async (e) => {
   e.preventDefault();
 
-  // 1. Ambil tanggal hari ini (set jam ke 00:00:00 untuk perbandingan murni tanggal)
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  // 2. Validasi apakah ada tanggal di masa lalu di dalam array trips
-  const hasPastDate = trips.some(trip => {
-    if (!trip.date) return false;
-    const inputDate = new Date(trip.date);
-    return inputDate < today;
-  });
-
-  if (hasPastDate) {
-    alert("Cannot book for a past date. Please select today or a future date.");
-    return;
-  }
-
-  // Validasi dasar lainnya
+  // --- 1. VALIDASI FORM & TANGGAL MASA LALU ---
   if (!selectedRequestor || !selectedAircraft || trips[0].adep === "" || trips[0].ades === "") {
     alert("Please complete the form (Customer, Aircraft, and Route).");
     return;
   }
 
-  // ... (Sisa kode payload dan axios post tetap sama)
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  // --- 2. VALIDASI LOGIKA RUTE & KONEKTIVITAS ---
+  for (let i = 0; i < trips.length; i++) {
+    const trip = trips[i];
+    if (trip.adep === trip.ades) {
+      alert(`Error Trip #${i + 1}: Departure and Destination cannot be the same.`);
+      return;
+    }
+    if (new Date(trip.date) < today) {
+      alert(`Error Trip #${i + 1}: Cannot book for a past date.`);
+      return;
+    }
+    if (i > 0 && trip.adep !== trips[i - 1].ades) {
+      alert(`Route Error: Trip #${i + 1} must depart from ${trips[i - 1].ades}.`);
+      return;
+    }
+  }
+
+  // --- 3. KONVERSI WAKTU REQUEST ---
+  const departureDate = `${trips[0].date} ${trips[0].time}:00`;
+  const lastTrip = trips[trips.length - 1];
+  const returnDate = tripType === 'Round Trip' ? `${lastTrip.date} ${lastTrip.time}:00` : departureDate;
+
+  const startReq = new Date(departureDate).getTime();
+  const endReq = new Date(returnDate).getTime();
+
+  // --- 4. VALIDASI: APAKAH ADA DI JADWAL AVAILABLE? (NEW LOGIC) ---
+  // Pesawat HARUS terdaftar di aircraft_available pada rentang waktu tersebut
+  const isWithinAvailableRange = availabilityData.some(avail => {
+    // Pastikan ini data untuk pesawat yang dipilih (jika API belum memfilter)
+    if (parseInt(avail.aircraft_id) !== parseInt(selectedAircraft)) return false;
+
+    const aStart = new Date(avail.available_start).getTime();
+    const aEnd = new Date(avail.available_end).getTime();
+
+    // Request harus berada DI DALAM range available (RequestStart >= AvailStart AND RequestEnd <= AvailEnd)
+    return startReq >= aStart && endReq <= aEnd;
+  });
+
+  if (!isWithinAvailableRange) {
+    alert("Aircraft Not Available: The selected date/time is outside the aircraft's operation schedule.");
+    return;
+  }
+
+  // --- 5. VALIDASI: APAKAH BENTROK DENGAN BOOKING LAIN? ---
+  const isOverlapping = bookedDates.some(booking => {
+    if (parseInt(booking.aircraft_available_id) !== parseInt(selectedAircraft)) return false;
+    const bStart = new Date(booking.departure_date).getTime();
+    const bEnd = booking.return_date ? new Date(booking.return_date).getTime() : bStart;
+    return startReq <= bEnd && endReq >= bStart;
+  });
+
+  if (isOverlapping) {
+    alert("Schedule Conflict: This aircraft is already booked by another customer.");
+    return;
+  }
+
+  // --- 6. KIRIM KE API (Jika lolos semua validasi) ---
+  try {
+    const token = localStorage.getItem('token');
+    const flightRoute = trips.map(t => `${t.adep}-${t.ades}`).join(' ');
+    const payload = {
+      customer_id: selectedRequestor.id,
+      aircraft_available_id: parseInt(selectedAircraft),
+      flight_type: tripType === 'Round Trip' ? 'roundtrip' : 'oneway',
+      departure_date: departureDate,
+      return_date: returnDate,
+      flight_route: flightRoute,
+      pax: parseInt(trips[0].pax) || 0
+    };
+
+    await axios.post('https://project-ppl-backend-production-9d58.up.railway.app/api/draft-quotation', payload, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    alert("Success! Draft Quotation created.");
+    resetForm();
+    
+    // Refresh data kalender
+    const resDrafts = await axios.get('https://project-ppl-backend-production-9d58.up.railway.app/api/draft-quotation', {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    setBookedDates(resDrafts.data.data || resDrafts.data);
+
+  } catch (err) {
+    console.error(err);
+    alert("Failed to submit request.");
+  }
 };
 
   // Auto-fill representative
@@ -120,6 +195,11 @@ const todayString = new Date().toISOString().split('T')[0];
   const handleTripChange = (index, field, value) => {
     const newTrips = [...trips];
     newTrips[index][field] = value;
+
+    // Jika user mengubah ADES, maka ADEP di baris setelahnya otomatis berubah (Bug 3)
+    if (field === 'ades' && newTrips[index + 1]) {
+      newTrips[index + 1].adep = value;
+    }
     setTrips(newTrips);
   };
 
@@ -242,6 +322,7 @@ const todayString = new Date().toISOString().split('T')[0];
           <div className="p-2">
             <CalendarPanel 
               bookedDates={bookedDates} 
+              availabilityData={availabilityData} // Tambahkan props ini
               selectedAircraftId={selectedAircraft} 
             />
           </div>
